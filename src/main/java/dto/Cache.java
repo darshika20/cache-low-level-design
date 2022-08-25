@@ -1,57 +1,49 @@
 package dto;
 
+import exception.NotFoundException;
+import exception.StorageFullException;
+import storage.Storage;
 import strategy.EvictionStrategy;
 
-import java.util.HashMap;
-import java.util.Map;
+public class Cache<Key, Value> {
 
-public class Cache {
+    public Storage<Key, Value> getStorage() {
+        return storage;
+    }
 
-    private Map<String, String> cacheMap;
+    private final Storage<Key, Value> storage;
 
-    static Cache cache;
+    private final EvictionStrategy<Key> evictionStrategy;
 
-    private EvictionStrategy evictionStrategy;
-
-    private int capacity;
-
-    private Cache(EvictionStrategy strategy, int capacity) {
-        this.cacheMap = new HashMap<>();
+    public Cache(EvictionStrategy<Key> strategy, Storage<Key, Value> storage) {
+        this.storage = storage;
         this.evictionStrategy = strategy;
-        this.capacity = capacity;
     }
 
-    public static Cache getInstance(EvictionStrategy strategy, int capacity) {
-        if (cache == null) {
-            cache = new Cache(strategy, capacity);
-            System.out.println("Created new Cache with eviction strategy " + strategy);
+    public Value getElementFromCache(Key key) throws StorageFullException {
+        //get element from storage
+        Value value = null;
+        try {
+            value = storage.get(key);
+        } catch (NotFoundException e) {
+            e.printStackTrace();
         }
-        return cache;
+        //pass element from storage to eviction strategy to modify key order
+        evictionStrategy.modifyKeyOrder(key);
+        return value;
     }
 
-    public static Cache getInstance() {
-        return cache;
-    }
-
-    public String getElementFromCache(String key) {
-        if (cacheMap.containsKey(key)) {
-            evictionStrategy.modifyCache(key, cacheMap.get(key), cache);
-            return cacheMap.get(key);
+    public void setElementInCache(Key key, Value value) {
+        try {
+            //put element in storage
+            storage.add(key, value);
+            //pass element from storage to eviction strategy to modify key order
+            evictionStrategy.modifyKeyOrder(key);
+        } catch (StorageFullException storageFullException) {
+            Key evictedKey = evictionStrategy.evictKey();
+            storage.remove(evictedKey);
+            setElementInCache(key, value);
         }
-        return null;
     }
 
-    public void setElementInCache(String key, String value) {
-
-        evictionStrategy.modifyCache(key, value, cache);
-        cacheMap.put(key, value);
-    }
-
-    public int getCapacity() {
-        return capacity;
-    }
-
-    public Map<String, String > getCacheMap() {
-        return cacheMap;
-    }
 }

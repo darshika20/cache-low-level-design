@@ -1,48 +1,56 @@
 package strategy;
 
-import dto.Cache;
 import dto.DoublyLinkedList;
 import dto.Node;
+import exception.StorageFullException;
 
 import java.util.HashMap;
 import java.util.Map;
 
-public class LeastRecentlyUsed implements EvictionStrategy{
+public class LeastRecentlyUsed<Key> implements EvictionStrategy<Key>{
 
-    private Map<String, Node> keyVsNode;
-    private DoublyLinkedList doublyLinkedList;
+    private final Map<Key, Node> mapper;
+    private final DoublyLinkedList<Key> doublyLinkedList;
+    private final int capacity;
 
 
-    public LeastRecentlyUsed() {
-        keyVsNode = new HashMap<>();
-        doublyLinkedList = new DoublyLinkedList();
+    public LeastRecentlyUsed(int capacity, Key key) {
+        mapper = new HashMap<>();
+        doublyLinkedList = new DoublyLinkedList<>(key);
+        this.capacity = capacity;
     }
 
+    /**
+     * Find Key in mapper
+     * If key exists, then delete the node from list and add it at first
+     * Else, check if storage is full , then throw storage full exception
+     * Else, create a new node and add it at first in list and add it to mapper
+     * */
     @Override
-    public void modifyCache(String key, String value, Cache cache) {
-        if (cache.getCacheMap().containsKey(key)) {
-            //update the value of the element in the double linked list
-            keyVsNode.get(key).setValue(value);
-            //delete that node from double linked list
-            doublyLinkedList.removeNode(keyVsNode.get(key));
-            //add this node to the start of linked list
-            doublyLinkedList.addFirst(keyVsNode.get(key));
-            return;
-            //return
-        } else if (cache.getCacheMap().size() == cache.getCapacity()) {
-            //delete the last element from double linked list
-            Node node = doublyLinkedList.removeLast();
-            //delete the last key from keyVsNode map
-            keyVsNode.remove(node.getKey());
-            //delete thr element from cache
-            cache.getCacheMap().remove(node.getKey());
+    public void modifyKeyOrder(Key key) throws StorageFullException {
+
+        if (mapper.containsKey(key)) {
+            Node<Key> node = mapper.get(key);
+            doublyLinkedList.removeNode(node);
+            doublyLinkedList.addFirst(node);
+        } else {
+            if (capacity == mapper.size()) {
+                throw new StorageFullException("Cache storage is full! Eviction of key is needed!");
+            } else {
+                Node<Key> node = new Node<>(key);
+                doublyLinkedList.addFirst(node);
+                mapper.put(key, node);
+            }
         }
-        //insert the new element at the head of the linked list
-        Node node = new Node();
-        node.setKey(key);
-        node.setValue(value);
-        doublyLinkedList.addFirst(node);
-        //insert the new key in keyVsNode map
-        keyVsNode.put(key, node);
+    }
+
+    /**
+     * Remove last node from list and mapper
+     * */
+    @Override
+    public Key evictKey() {
+        Node<Key> node = doublyLinkedList.removeLast();
+        mapper.remove(node.getKey());
+        return node.getKey();
     }
 }

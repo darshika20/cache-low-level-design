@@ -1,8 +1,11 @@
 package strategy;
 
 import dto.Cache;
+import exception.StorageFullException;
 
-public interface EvictionStrategy {
+public interface EvictionStrategy<Key> {
 
-    void modifyCache(String key, String value, Cache cache);
+    void modifyKeyOrder(Key key) throws StorageFullException;
+
+    Key evictKey();
 }

@@ -1,26 +1,18 @@
 package dto;
 
-public class Node {
 
-    private String key;
-    private String value;
-    private Node next;
-    private Node prev;
+public class Node<Key> {
 
-    public String getValue() {
-        return value;
-    }
+    private Key key;
+    private Node<Key> next;
+    private Node<Key> prev;
 
-    public void setValue(String val) {
-        this.value = val;
-    }
-
-    public String getKey() {
-        return key;
-    }
-
-    public void setKey(String key) {
+    public Node(Key key) {
         this.key = key;
+    }
+
+    public Key getKey() {
+        return key;
     }
 
     public Node getNext() {

@@ -1,39 +1,36 @@
 package dto;
 
-public class DoublyLinkedList {
+public class DoublyLinkedList<Key> {
 
-    private Node head;
-    private Node tail;
-    private int capacity;
+    private Node<Key> head;
+    private Node<Key> tail;
 
-    public DoublyLinkedList() {
-        this.head = new Node();
-        this.tail = new Node();
+    public DoublyLinkedList(Key key) {
+        this.head = new Node<>(key);
+        this.tail = new Node<>(key);
         head.setNext(tail);
         tail.setPrev(head);
-        capacity = 0;
     }
 
-    public void addFirst(Node node) {
-        Node temp = head.getNext();
+    public void addFirst(Node<Key> node) {
+        Node<Key> temp = head.getNext();
         node.setNext(temp);
         temp.setPrev(node);
         head.setNext(node);
         node.setPrev(head);
-        capacity++;
     }
 
-    public Node removeLast() {
-        if (capacity == 0) {
+    public Node<Key> removeLast() {
+        if (tail.getPrev() == head) {
             throw new RuntimeException("List is empty");
         }
-        Node node = tail.getPrev();
+        Node<Key> node = tail.getPrev();
         tail.setPrev(node.getPrev());
         node.getPrev().setNext(tail);
         return node;
     }
 
-    public void removeNode(Node node) {
+    public void removeNode(Node<Key> node) {
         node.getPrev().setNext(node.getNext());
         node.getNext().setPrev(node.getPrev());
     }
